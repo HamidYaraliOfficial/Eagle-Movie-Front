@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eagle Movie</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Vazirmatn, Noto Serif CJK SC -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Vazirmatn', 'Noto Serif SC', sans-serif;
+            background-color: #0c111d;
+            background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0);
+            background-size: 20px 20px;
+        }
+        .glass-effect {
+            background: rgba(23, 31, 48, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .overview-text {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+        }
+        select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: left 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-left: 2.5rem;
+            -webkit-appearance: none; -moz-appearance: none; appearance: none;
+        }
+        #movieModal.hidden { display: none; }
+        .modal-content { max-height: 90vh; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 10px; }
+        .card-hover-effect { transition: all 0.3s ease-in-out; }
+        .card-hover-effect:hover { transform: translateY(-8px) scale(1.03); box-shadow: 0 20px 30px rgba(0,0,0,0.4); }
+        .search-type-toggle { transition: all 0.3s ease; }
+        .search-type-toggle.active { background-color: #f59e0b; color: #111827; }
+        /* Modal Tab Styles */
+        .modal-tab, .media-tab {
+            cursor: pointer;
+            padding: 0.75rem 1rem;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .modal-tab.active, .media-tab.active {
+            color: #f59e0b;
+            border-bottom-color: #f59e0b;
+        }
+        .modal-tab-panel, .media-tab-panel {
+            display: none;
+        }
+        .modal-tab-panel.active, .media-tab-panel.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="text-gray-200">
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-6xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-amber-400 to-orange-500" id="header-title">کاوشگر Ultra Pro</h1>
+            <p class="text-gray-400 text-lg" id="header-subtitle">مرکز جامع فیلم و سریال شما</p>
+            <!-- Language Selector -->
+            <div class="mt-4">
+                <select id="languageSelector" class="bg-gray-700/50 border border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
+                    <option value="fa-IR">فارسی</option>
+                    <option value="en-US">English</option>
+                    <option value="zh-CN">中文</option>
+                </select>
+            </div>
+        </header>
+
+        <!-- Search & Filter Section -->
+        <div class="max-w-4xl mx-auto mb-12 p-5 glass-effect rounded-2xl shadow-lg">
+            <div class="flex justify-center mb-5 bg-gray-900/50 rounded-full p-1 w-fit mx-auto border border-gray-700">
+                <button id="typeMovie" class="search-type-toggle active px-6 py-2 rounded-full font-bold">فیلم</button>
+                <button id="typeTv" class="search-type-toggle px-6 py-2 rounded-full font-bold">سریال</button>
+            </div>
+            <form id="searchForm" class="flex items-center bg-gray-900/70 rounded-full overflow-hidden mb-4 border border-gray-700">
+                <input type="text" id="searchInput" placeholder="جستجو در میان فیلم‌ها..." class="w-full bg-transparent py-3 px-6 placeholder-gray-500 focus:outline-none">
+                <button type="submit" class="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold py-3 px-8 transition-all">جستجو</button>
+            </form>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <select id="genreFilter" class="bg-gray-700/50 border border-gray-600 rounded-lg p-2.5 w-full focus:ring-2 focus:ring-amber-500 focus:border-amber-500"></select>
+                <select id="sortByFilter" class="bg-gray-700/50 border border-gray-600 rounded-lg p-2.5 w-full focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
+                    <option value="popularity.desc">محبوب‌ترین</option>
+                    <option value="vote_average.desc">بیشترین امتیاز</option>
+                    <option value="primary_release_date.desc">جدیدترین</option>
+                </select>
+                <button id="filterButton" class="w-full bg-blue-600 hover:bg-blue-700 font-bold py-2.5 px-4 rounded-lg transition-colors">اعمال فیلتر</button>
+            </div>
+        </div>
+
+        <!-- Message and Loader -->
+        <div id="message" class="text-center text-xl text-gray-500 my-10"></div>
+        <div id="loader" class="hidden text-center my-10">
+            <svg class="animate-spin h-8 w-8 text-amber-400 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+        </div>
+
+        <!-- Results Grid -->
+        <main id="resultsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8"></main>
+
+        <!-- Load More Button -->
+        <div id="loadMoreContainer" class="text-center mt-12 hidden">
+            <button id="loadMoreButton" class="bg-gray-700 hover:bg-amber-500 hover:text-gray-900 font-bold py-3 px-8 rounded-lg transition-colors">بارگذاری بیشتر...</button>
+        </div>
+    </div>
+
+    <!-- Movie Details Modal -->
+    <div id="movieModal" class="hidden fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center p-4 transition-opacity duration-300">
+        <div id="modalContent" class="modal-content glass-effect rounded-2xl w-full max-w-6xl overflow-y-auto relative shadow-2xl">
+            <div id="modalLoader" class="absolute inset-0 bg-gray-800/50 flex items-center justify-center rounded-2xl">
+                 <svg class="animate-spin h-10 w-10 text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const $ = (selector) => document.querySelector(selector);
+        const searchForm = $('#searchForm'), searchInput = $('#searchInput'), genreFilter = $('#genreFilter');
+        const sortByFilter = $('#sortByFilter'), filterButton = $('#filterButton'), resultsGrid = $('#resultsGrid');
+        const loadMoreContainer = $('#loadMoreContainer'), loadMoreButton = $('#loadMoreButton');
+        const messageEl = $('#message'), loader = $('#loader'), movieModal = $('#movieModal');
+        const modalContent = $('#modalContent'), modalLoader = $('#modalLoader');
+        const typeMovieBtn = $('#typeMovie'), typeTvBtn = $('#typeTv');
+        const languageSelector = $('#languageSelector');
+
+        // --- API Configuration ---
+        const API_KEY = '64f59dc5134cf888f0e0cdc01e9bc12e';
+        const API_BASE_URL = 'https://api.themoviedb.org/3';
+        const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
+        const BACKDROP_BASE_URL = 'https://image.tmdb.org/t/p/w1280';
+
+        // --- Application State ---
+        let state = {
+            currentPage: 1,
+            totalPages: 0,
+            currentQuery: '',
+            currentSortBy: 'popularity.desc',
+            currentGenre: '',
+            isNewSearch: true,
+            searchType: 'movie',
+            language: 'fa-IR',
+        };
+
+        // --- Language Configuration ---
+        const translations = {
+            'fa-IR': {
+                headerTitle: 'کاوشگر Ultra Pro',
+                headerSubtitle: 'مرکز جامع فیلم و سریال شما',
+                searchPlaceholder: 'جستجو در میان %s...',
+                movieBtn: 'فیلم',
+                tvBtn: 'سریال',
+                sortOptions: {
+                    'popularity.desc': 'محبوب‌ترین',
+                    'vote_average.desc': 'بیشترین امتیاز',
+                    'primary_release_date.desc': 'جدیدترین %s',
+                },
+                filterBtn: 'اعمال فیلتر',
+                loadMore: 'بارگذاری بیشتر...',
+                noResults: 'هیچ نتیجه‌ای یافت نشد.',
+                serverError: 'خطا در ارتباط با سرور.',
+                detailsBtn: 'نمایش کامل جزئیات',
+                modalTabs: {
+                    info: 'اطلاعات کلی',
+                    cast: 'بازیگران',
+                    media: 'رسانه',
+                    reviews: 'نقدها',
+                },
+                mediaTabs: {
+                    videos: 'ویدیوها',
+                    backdrops: 'پس‌زمینه‌ها',
+                    posters: 'پوسترها',
+                },
+                noOverview: 'خلاصه داستان موجود نیست.',
+                noCast: 'اطلاعات بازیگران یافت نشد.',
+                noVideos: 'ویدیویی یافت نشد.',
+                noBackdrops: 'پس‌زمینه‌ای یافت نشد.',
+                noPosters: 'پوستری یافت نشد.',
+                noReviews: 'هیچ نقدی برای این مورد ثبت نشده است.',
+                modalError: 'متاسفانه امکان بارگذاری جزئیات وجود ندارد.',
+                rating: 'امتیاز',
+            },
+            'en-US': {
+                headerTitle: 'Ultra Pro Explorer',
+                headerSubtitle: 'Your Comprehensive Movie and TV Hub',
+                searchPlaceholder: 'Search for %s...',
+                movieBtn: 'Movies',
+                tvBtn: 'TV Shows',
+                sortOptions: {
+                    'popularity.desc': 'Most Popular',
+                    'vote_average.desc': 'Highest Rated',
+                    'primary_release_date.desc': 'Newest %s',
+                },
+                filterBtn: 'Apply Filter',
+                loadMore: 'Load More...',
+                noResults: 'No results found.',
+                serverError: 'Error connecting to the server.',
+                detailsBtn: 'View Full Details',
+                modalTabs: {
+                    info: 'General Info',
+                    cast: 'Cast',
+                    media: 'Media',
+                    reviews: 'Reviews',
+                },
+                mediaTabs: {
+                    videos: 'Videos',
+                    backdrops: 'Backdrops',
+                    posters: 'Posters',
+                },
+                noOverview: 'No overview available.',
+                noCast: 'No cast information available.',
+                noVideos: 'No videos found.',
+                noBackdrops: 'No backdrops found.',
+                noPosters: 'No posters found.',
+                noReviews: 'No reviews available for this item.',
+                modalError: 'Unable to load details.',
+                rating: 'Rating',
+            },
+            'zh-CN': {
+                headerTitle: '超级探险家',
+                headerSubtitle: '您的综合电影和电视剧中心',
+                searchPlaceholder: '搜索%s...',
+                movieBtn: '电影',
+                tvBtn: '电视剧',
+                sortOptions: {
+                    'popularity.desc': '最受欢迎',
+                    'vote_average.desc': '评分最高',
+                    'primary_release_date.desc': '最新%s',
+                },
+                filterBtn: '应用过滤器',
+                loadMore: '加载更多...',
+                noResults: '未找到任何结果。',
+                serverError: '连接服务器时出错。',
+                detailsBtn: '查看完整详情',
+                modalTabs: {
+                    info: '基本信息',
+                    cast: '演员阵容',
+                    media: '媒体',
+                    reviews: '评论',
+                },
+                mediaTabs: {
+                    videos: '视频',
+                    backdrops: '背景图片',
+                    posters: '海报',
+                },
+                noOverview: '暂无简介。',
+                noCast: '暂无演员信息。',
+                noVideos: '未找到视频。',
+                noBackdrops: '未找到背景图片。',
+                noPosters: '未找到海报。',
+                noReviews: '此项目暂无评论。',
+                modalError: '无法加载详情。',
+                rating: '评分',
+            },
+        };
+
+        // --- Functions ---
+        function normalizeData(item, type) {
+            const searchType = type || state.searchType;
+            const isMovie = searchType === 'movie';
+            return {
+                id: item.id,
+                title: isMovie ? item.title : item.name,
+                overview: item.overview,
+                poster_path: item.poster_path,
+                backdrop_path: item.backdrop_path,
+                vote_average: item.vote_average,
+                release_date: isMovie ? item.release_date : item.first_air_date,
+                genres: item.genres,
+                runtime: item.runtime,
+                credits: item.credits,
+                videos: item.videos,
+                images: item.images,
+                reviews: item.reviews,
+            };
+        }
+
+        async function fetchAndDisplay() {
+            loader.classList.remove('hidden');
+            messageEl.textContent = '';
+            if (state.isNewSearch) resultsGrid.innerHTML = '';
+            loadMoreContainer.classList.add('hidden');
+
+            const endpoint = state.currentQuery ? `search/${state.searchType}` : `discover/${state.searchType}`;
+            let url = new URL(`${API_BASE_URL}/${endpoint}`);
+            url.searchParams.set('api_key', API_KEY);
+            url.searchParams.set('page', state.currentPage);
+            url.searchParams.set('language', state.language);
+            url.searchParams.set('include_adult', 'false');
+
+            if (state.currentQuery) {
+                url.searchParams.set('query', state.currentQuery);
+            } else {
+                url.searchParams.set('sort_by', state.currentSortBy);
+                if (state.currentGenre) url.searchParams.set('with_genres', state.currentGenre);
+            }
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`Network error: ${response.status}`);
+                const data = await response.json();
+                
+                if (data.results.length === 0 && state.isNewSearch) {
+                    messageEl.textContent = translations[state.language].noResults;
+                }
+
+                displayResults(data.results.map(item => normalizeData(item)));
+                state.totalPages = data.total_pages;
+                if (state.currentPage < state.totalPages) {
+                    loadMoreContainer.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Fetch Error:', error);
+                messageEl.textContent = translations[state.language].serverError;
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+        function displayResults(items) {
+            items.forEach(item => {
+                const posterPath = item.poster_path ? `${IMAGE_BASE_URL}${item.poster_path}` : 'https://placehold.co/500x750/1f2937/4b5563?text=بدون+پوستر';
+                const voteAverage = item.vote_average ? item.vote_average.toFixed(1) : 'N/A';
+
+                const movieCard = document.createElement('div');
+                movieCard.className = 'bg-gray-800/50 rounded-lg shadow-lg overflow-hidden flex flex-col card-hover-effect border border-gray-700/50';
+                movieCard.innerHTML = `
+                    <div class="relative">
+                        <img src="${posterPath}" alt="${item.title}" class="w-full h-auto object-cover" onerror="this.onerror=null;this.src='https://placehold.co/500x750/1f2937/4b5563?text=خطا';">
+                        <div class="absolute top-2 right-2 bg-black/50 backdrop-blur-sm text-amber-400 text-sm font-bold px-2 py-1 rounded-full flex items-center border border-amber-400/50">⭐<span class="mr-1">${voteAverage}</span></div>
+                    </div>
+                    <div class="p-4 flex flex-col flex-grow">
+                        <h3 class="text-lg font-bold mb-2 text-gray-100">${item.title}</h3>
+                        <p class="text-gray-400 text-sm flex-grow overview-text">${item.overview || translations[state.language].noOverview}</p>
+                        <div class="mt-4 pt-4 border-t border-gray-700">
+                             <button data-id="${item.id}" class="details-button block w-full text-center bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 font-semibold py-2 px-4 rounded-lg transition-all">
+                                ${translations[state.language].detailsBtn}
+                             </button>
+                        </div>
+                    </div>
+                `;
+                resultsGrid.appendChild(movieCard);
+            });
+        }
+
+        async function openModal(id) {
+            movieModal.classList.remove('hidden');
+            modalContent.innerHTML = `<div id="modalLoader" class="absolute inset-0 bg-gray-800/50 flex items-center justify-center rounded-2xl">
+                 <svg class="animate-spin h-10 w-10 text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            </div>`;
+
+            try {
+                const url = `${API_BASE_URL}/${state.searchType}/${id}?api_key=${API_KEY}&language=${state.language}&append_to_response=credits,videos,images,reviews`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Failed to fetch details');
+                
+                const data = await response.json();
+                const details = normalizeData(data);
+                
+                displayModalContent(details);
+
+            } catch (error) {
+                console.error('Modal fetch error:', error);
+                modalContent.innerHTML = `<div class="p-8 text-center">${translations[state.language].modalError} <button id="closeModalBtn" class="text-red-500 ml-4">بستن</button></div>`;
+                $('#closeModalBtn')?.addEventListener('click', closeModal);
+            }
+        }
+
+        function displayModalContent(details) {
+            const posterPath = details.poster_path ? `${IMAGE_BASE_URL}${details.poster_path}` : 'https://placehold.co/300x450/1f2937/4b5563?text=بدون+پوستر';
+            const genres = details.genres?.map(g => `<span class="bg-gray-700 px-3 py-1 rounded-full text-xs">${g.name}</span>`).join(' ') || '';
+
+            // Tab Content Generators
+            const createInfoTab = () => `
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+                    <div class="md:col-span-4">
+                        <img src="${posterPath}" class="rounded-lg shadow-2xl w-full">
+                    </div>
+                    <div class="md:col-span-8">
+                        <h2 class="text-4xl font-bold text-white">${details.title}</h2>
+                        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-400 my-4">
+                            <span class="flex items-center">⭐ ${details.vote_average ? details.vote_average.toFixed(1) : 'N/A'}</span>
+                            <span>|</span>
+                            <span class="flex items-center">${details.release_date ? new Date(details.release_date).toLocaleDateString(state.language) : 'نامشخص'}</span>
+                            ${details.runtime ? `<span>|</span><span class="flex items-center">${details.runtime} دقیقه</span>` : ''}
+                        </div>
+                        <div class="flex flex-wrap gap-2 mb-4">${genres}</div>
+                        <p class="mb-6 text-gray-300 leading-relaxed">${details.overview || translations[state.language].noOverview}</p>
+                    </div>
+                </div>
+            `;
+
+            const createCastTab = () => {
+                const cast = details.credits?.cast.slice(0, 18).map(c => `
+                    <div class="text-center transition-transform hover:scale-105">
+                        <img src="${c.profile_path ? IMAGE_BASE_URL + c.profile_path : 'https://placehold.co/200x300/374151/9ca3af?text=?'}" class="rounded-lg mx-auto w-28 h-42 object-cover shadow-md">
+                        <p class="text-sm mt-2 font-bold">${c.name}</p>
+                        <p class="text-xs text-gray-400">${c.character}</p>
+                    </div>`).join('');
+                return cast && cast.length > 0 ? `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">${cast}</div>` : `<p class="text-gray-400 text-center">${translations[state.language].noCast}</p>`;
+            };
+            
+            const createMediaTab = () => {
+                const videos = details.videos?.results.filter(v => v.site === 'YouTube') || [];
+                const backdrops = details.images?.backdrops || [];
+                const posters = details.images?.posters || [];
+
+                let videoContent;
+                if (videos.length > 0) {
+                    videoContent = videos.map(v => `
+                        <div class="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden">
+                            <iframe src="https://www.youtube.com/embed/${v.key}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                        </div>`).join('');
+                } else {
+                    videoContent = `<p class="text-gray-400 text-center col-span-full">${translations[state.language].noVideos}</p>`;
+                }
+                
+                let backdropContent;
+                if (backdrops.length > 0) {
+                     backdropContent = backdrops.slice(0, 12).map(img => `
+                        <a href="${BACKDROP_BASE_URL + img.file_path}" target="_blank" class="block rounded-lg overflow-hidden shadow-md"><img src="${IMAGE_BASE_URL + img.file_path}" class="w-full object-cover transition-transform hover:scale-105"></a>`).join('');
+                } else if (details.backdrop_path) {
+                    backdropContent = `<a href="${BACKDROP_BASE_URL + details.backdrop_path}" target="_blank" class="block rounded-lg overflow-hidden shadow-md"><img src="${IMAGE_BASE_URL + details.backdrop_path}" class="w-full object-cover transition-transform hover:scale-105"></a>`;
+                } else {
+                    backdropContent = `<p class="text-gray-400 text-center col-span-full">${translations[state.language].noBackdrops}</p>`;
+                }
+
+                let posterContent;
+                if (posters.length > 0) {
+                    posterContent = posters.slice(0, 12).map(img => `
+                        <a href="${BACKDROP_BASE_URL + img.file_path}" target="_blank" class="block rounded-lg overflow-hidden shadow-md"><img src="${IMAGE_BASE_URL + img.file_path}" class="w-full object-cover transition-transform hover:scale-105"></a>`).join('');
+                } else if (details.poster_path) {
+                    posterContent = `<a href="${BACKDROP_BASE_URL + details.poster_path}" target="_blank" class="block rounded-lg overflow-hidden shadow-md"><img src="${IMAGE_BASE_URL + details.poster_path}" class="w-full object-cover transition-transform hover:scale-105"></a>`;
+                } else {
+                    posterContent = `<p class="text-gray-400 text-center col-span-full">${translations[state.language].noPosters}</p>`;
+                }
+
+                return `
+                    <div class="flex border-b border-gray-600 mb-4">
+                        <div data-media-tab="videos" class="media-tab active">${translations[state.language].mediaTabs.videos} <span class="text-xs bg-gray-600 text-gray-300 px-2 py-0.5 rounded-full">${videos.length}</span></div>
+                        <div data-media-tab="backdrops" class="media-tab">${translations[state.language].mediaTabs.backdrops} <span class="text-xs bg-gray-600 text-gray-300 px-2 py-0.5 rounded-full">${backdrops.length}</span></div>
+                        <div data-media-tab="posters" class="media-tab">${translations[state.language].mediaTabs.posters} <span class="text-xs bg-gray-600 text-gray-300 px-2 py-0.5 rounded-full">${posters.length}</span></div>
+                    </div>
+                    <div>
+                        <div id="videosPanel" class="media-tab-panel active grid grid-cols-1 md:grid-cols-2 gap-4">${videoContent}</div>
+                        <div id="backdropsPanel" class="media-tab-panel grid grid-cols-2 md:grid-cols-3 gap-4">${backdropContent}</div>
+                        <div id="postersPanel" class="media-tab-panel grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">${posterContent}</div>
+                    </div>
+                `;
+            };
+
+            const createReviewsTab = () => {
+                const reviews = details.reviews?.results.map(r => {
+                    let avatarUrl = 'https://placehold.co/48x48/4b5563/ffffff?text=?';
+                    if (r.author_details.avatar_path) {
+                        if (r.author_details.avatar_path.startsWith('/https://')) {
+                            avatarUrl = r.author_details.avatar_path.substring(1);
+                        } else {
+                            avatarUrl = IMAGE_BASE_URL + r.author_details.avatar_path;
+                        }
+                    }
+                    return `
+                    <div class="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+                        <div class="flex items-center mb-2">
+                            <img src="${avatarUrl}" class="w-12 h-12 rounded-full mr-4 object-cover" onerror="this.src='https://placehold.co/48x48/4b5563/ffffff?text=?';">
+                            <div>
+                                <h4 class="font-bold">${r.author}</h4>
+                                <p class="text-xs text-gray-400">${translations[state.language].rating}: ${r.author_details.rating ? r.author_details.rating + '/10' : 'N/A'}</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-300 text-sm leading-relaxed">${r.content.substring(0, 500)}${r.content.length > 500 ? '...' : ''}</p>
+                    </div>`
+                }).join('');
+                return reviews && reviews.length > 0 ? `<div class="space-y-6">${reviews}</div>` : `<p class="text-gray-400 text-center">${translations[state.language].noReviews}</p>`;
+            };
+
+            modalContent.innerHTML = `
+                <div class="sticky top-0 z-10 glass-effect rounded-t-2xl">
+                    <button id="closeModalBtn" class="absolute top-4 right-4 text-white bg-black/50 rounded-full p-2 hover:bg-red-500 transition-colors">&times;</button>
+                    <div class="flex border-b border-gray-700 px-6">
+                        <div data-tab="info" class="modal-tab active">${translations[state.language].modalTabs.info}</div>
+                        <div data-tab="cast" class="modal-tab">${translations[state.language].modalTabs.cast}</div>
+                        <div data-tab="media" class="modal-tab">${translations[state.language].modalTabs.media}</div>
+                        <div data-tab="reviews" class="modal-tab">${translations[state.language].modalTabs.reviews}</div>
+                    </div>
+                </div>
+                <div class="p-6 md:p-8">
+                    <div id="infoPanel" class="modal-tab-panel active">${createInfoTab()}</div>
+                    <div id="castPanel" class="modal-tab-panel">${createCastTab()}</div>
+                    <div id="mediaPanel" class="modal-tab-panel">${createMediaTab()}</div>
+                    <div id="reviewsPanel" class="modal-tab-panel">${createReviewsTab()}</div>
+                </div>
+            `;
+            
+            // Activate Main Tab Logic
+            modalContent.querySelectorAll('.modal-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    modalContent.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+                    modalContent.querySelectorAll('.modal-tab-panel').forEach(p => p.classList.remove('active'));
+                    tab.classList.add('active');
+                    modalContent.querySelector(`#${tab.dataset.tab}Panel`).classList.add('active');
+                });
+            });
+
+            // Activate Media Sub-Tab Logic
+            modalContent.querySelectorAll('.media-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    modalContent.querySelectorAll('.media-tab').forEach(t => t.classList.remove('active'));
+                    modalContent.querySelectorAll('.media-tab-panel').forEach(p => p.classList.remove('active'));
+                    tab.classList.add('active');
+                    modalContent.querySelector(`#${tab.dataset.mediaTab}Panel`).classList.add('active');
+                });
+            });
+
+            $('#closeModalBtn').addEventListener('click', closeModal);
+        }
+
+        function closeModal() {
+            movieModal.classList.add('hidden');
+            const iframe = modalContent.querySelector('iframe');
+            if (iframe) iframe.src = iframe.src;
+        }
+
+        async function updateGenres() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/genre/${state.searchType}/list?api_key=${API_KEY}&language=${state.language}`);
+                const data = await response.json();
+                genreFilter.innerHTML = `<option value="">${translations[state.language].sortOptions['popularity.desc'].replace('محبوب‌ترین', 'همه ژانرها').replace('Most Popular', 'All Genres').replace('最受欢迎', '所有类型')}</option>`;
+                data.genres.forEach(genre => {
+                    genreFilter.innerHTML += `<option value="${genre.id}">${genre.name}</option>`;
+                });
+            } catch (error) { console.error('Genre fetch error:', error); }
+        }
+
+        function updateUILanguage() {
+            const t = translations[state.language];
+            $('#header-title').textContent = t.headerTitle;
+            $('#header-subtitle').textContent = t.headerSubtitle;
+            searchInput.placeholder = t.searchPlaceholder.replace('%s', state.searchType === 'movie' ? t.movieBtn : t.tvBtn);
+            typeMovieBtn.textContent = t.movieBtn;
+            typeTvBtn.textContent = t.tvBtn;
+            sortByFilter.innerHTML = `
+                <option value="popularity.desc">${t.sortOptions['popularity.desc']}</option>
+                <option value="vote_average.desc">${t.sortOptions['vote_average.desc']}</option>
+                <option value="primary_release_date.desc">${t.sortOptions['primary_release_date.desc'].replace('%s', state.searchType === 'movie' ? t.movieBtn : t.tvBtn)}</option>
+            `;
+            filterButton.textContent = t.filterBtn;
+            loadMoreButton.textContent = t.loadMore;
+            document.documentElement.lang = state.language.split('-')[0];
+            document.documentElement.dir = state.language === 'fa-IR' ? 'rtl' : 'ltr';
+            updateGenres();
+            handleNewSearch();
+        }
+
+        function handleNewSearch() {
+            state.isNewSearch = true;
+            state.currentPage = 1;
+            fetchAndDisplay();
+        }
+
+        // --- Event Listeners ---
+        searchForm.addEventListener('submit', e => {
+            e.preventDefault();
+            state.currentQuery = searchInput.value.trim();
+            if (!state.currentQuery) return;
+            state.currentGenre = '';
+            genreFilter.value = '';
+            handleNewSearch();
+        });
+
+        filterButton.addEventListener('click', () => {
+            state.currentQuery = '';
+            searchInput.value = '';
+            state.currentGenre = genreFilter.value;
+            state.currentSortBy = sortByFilter.value;
+            handleNewSearch();
+        });
+
+        loadMoreButton.addEventListener('click', () => {
+            state.isNewSearch = false;
+            state.currentPage++;
+            fetchAndDisplay();
+        });
+
+        resultsGrid.addEventListener('click', e => {
+            const button = e.target.closest('.details-button');
+            if (button) openModal(button.dataset.id);
+        });
+        
+        [typeMovieBtn, typeTvBtn].forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.searchType = btn.id === 'typeMovie' ? 'movie' : 'tv';
+                typeMovieBtn.classList.toggle('active', state.searchType === 'movie');
+                typeTvBtn.classList.toggle('active', state.searchType === 'tv');
+                updateUILanguage();
+            });
+        });
+
+        languageSelector.addEventListener('change', () => {
+            state.language = languageSelector.value;
+            updateUILanguage();
+        });
+
+        movieModal.addEventListener('click', e => { if (e.target === movieModal) closeModal(); });
+        document.addEventListener('keydown', e => { if (e.key === "Escape") closeModal(); });
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            updateUILanguage();
+        });
+    </script>
+</body>
+</html>
